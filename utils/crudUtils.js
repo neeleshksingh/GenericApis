@@ -38,7 +38,6 @@ const getById = (Model) => async (req, res) => {
 const add = (Model) => async (req, res) => {
     try {
         const payload = req.body;
-        // Add validation logic here if needed
         const data = await Model.create(payload);
         return res.status(200).json({
             status: 'success',
