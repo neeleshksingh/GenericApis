@@ -1,5 +1,3 @@
-const express = require('express');
-
 const getAll = (Model) => async (req, res) => {
     try {
         const data = await Model.find();
@@ -38,6 +36,14 @@ const getById = (Model) => async (req, res) => {
 const add = (Model) => async (req, res) => {
     try {
         const payload = req.body;
+        const validationErrors = validatePayload(payload, Model.schema.obj);
+        if (validationErrors.length > 0) {
+            return res.status(400).json({
+                status: 'failed',
+                message: 'Validation error',
+                errors: validationErrors
+            });
+        }
         const data = await Model.create(payload);
         return res.status(200).json({
             status: 'success',
@@ -53,7 +59,16 @@ const add = (Model) => async (req, res) => {
 
 const updateById = (Model) => async (req, res) => {
     try {
-        const data = await Model.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
+        const payload = req.body;
+        const validationErrors = validatePayload(payload, Model.schema.obj);
+        if (validationErrors.length > 0) {
+            return res.status(400).json({
+                status: 'failed',
+                message: 'Validation error',
+                errors: validationErrors
+            });
+        }
+        const data = await Model.findOneAndUpdate({ _id: req.params.id }, payload, { new: true });
         if (data) {
             return res.status(200).json({
                 status: 'success',
@@ -63,7 +78,7 @@ const updateById = (Model) => async (req, res) => {
         } else {
             return res.status(404).json({
                 status: 'failed',
-                message: 'No record found with this id!'
+                message: 'No record found with that id'
             });
         }
     } catch (e) {
@@ -93,6 +108,19 @@ const deleteById = (Model) => async (req, res) => {
             error: e.message
         });
     }
+};
+
+const validatePayload = (payload, schema) => {
+    const errors = [];
+    const modelFields = Object.keys(schema);
+
+    for (const field in payload) {
+        if (!modelFields.includes(field)) {
+            errors.push(`Field '${field}' is not allowed.`);
+        }
+    }
+
+    return errors;
 };
 
 module.exports = {
